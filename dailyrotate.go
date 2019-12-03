@@ -14,13 +14,12 @@ const (
 	DefaultMaxAge       = 7
 )
 
-// RotateWriter ...
 type RotateWriter struct {
 	lock         sync.Mutex
 	logsFile     *os.File
 	time         time.Time
-	LogsFilePath string `default:"/tmp/rotating.log"`
-	MaxAge       int    `default:"7"`
+	LogsFilePath string
+	MaxAge       int
 }
 
 func New(p string, ma int) (*RotateWriter, error) {
