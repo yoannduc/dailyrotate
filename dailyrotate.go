@@ -2,9 +2,11 @@ package dailyrotate
 
 import (
 	"errors"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -68,88 +70,113 @@ func NewWithDefaults() (*RotateWriter, error) {
 	}, nil
 }
 
-// // Write satisfies the io.Writer interface.
-// func (w *RotateWriter) Write(output []byte) (int, error) {
-// 	w.lock.Lock()
-// 	defer w.lock.Unlock()
-// 	return w.logsFile.Write(output)
-// }
+// Write satisfies the io.Writer interface.
+func (rw *RotateWriter) Write(output []byte) (int, error) {
+	rw.lock.Lock()
+	defer rw.lock.Unlock()
+	return rw.logsFile.Write(output)
+}
 
-// // Rotate perform the actual act of rotating and reopening file.
-// func (w *RotateWriter) Rotate() (err error) {
-// 	w.lock.Lock()
-// 	defer w.lock.Unlock()
+func (rw *RotateWriter) ShouldRotate() bool {
+	ny, nm, nd := time.Now().Date()
+	rwy, rwm, rwd := rw.time.Date()
 
-// 	if w.time.IsZero() {
-// 		w.time = time.Now()
-// 	} else if w.time.YearDay() == time.Now().YearDay() &&
-// 		w.time.Year() == time.Now().Year() &&
-// 		w.logsFile != nil {
-// 		return
-// 	}
+	if ny != rwy || nm != rwm || nd != rwd {
+		return true
+	}
 
-// 	// Close existing file if open
-// 	if w.logsFile != nil {
-// 		err = w.logsFile.Close()
-// 		if err != nil {
-// 			return err
-// 		}
-// 		w.logsFile = nil
-// 	}
+	if f, err := os.Stat(rw.LogsFilePath); err == nil {
+		fy, fm, fd := f.ModTime().Date()
 
-// 	dirname := filepath.Dir(w.LogsFilePath)
-// 	basename := filepath.Base(w.LogsFilePath)
+		if fy != rwy || fm != rwm || fd != rwd {
+			return true
+		}
+	}
 
-// 	if logsFile, err := os.Stat(w.LogsFilePath); err == nil &&
-// 		(w.time.YearDay() != logsFile.ModTime().YearDay() ||
-// 			w.time.Year() != logsFile.ModTime().Year()) {
-// 		err := os.Rename(
-// 			w.LogsFilePath,
-// 			dirname+"/"+logsFile.ModTime().Format("2006-01-02")+"-"+basename,
-// 		)
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
+	return false
+}
 
-// 	w.logsFile, err = os.OpenFile(
-// 		w.LogsFilePath,
-// 		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
-// 		0644,
-// 	)
-// 	if err != nil {
-// 		return err
-// 	}
+func (rw *RotateWriter) Rotate() error {
+	rw.lock.Lock()
+	defer rw.lock.Unlock()
 
-// 	kl := make(map[string]interface{})
-// 	for i := 0; i < w.MaxAge; i++ {
-// 		kl[time.Now().AddDate(0, 0, -i).Format("2006-01-02")+"-"+basename] = ""
-// 	}
+	// Close existing file if open
+	if rw.logsFile != nil {
+		err := rw.logsFile.Close()
+		if err != nil {
+			return err
+		}
+		rw.logsFile = nil
+	}
 
-// 	files, err := ioutil.ReadDir(dirname)
-// 	if err != nil {
-// 		w.logsFile.Close()
-// 		return err
-// 	}
+	d := filepath.Dir(rw.LogsFilePath)
+	b := filepath.Base(rw.LogsFilePath)
+	if lf, err := os.Stat(rw.LogsFilePath); err == nil {
+		err = os.Rename(
+			rw.LogsFilePath,
+			d+"/"+lf.ModTime().Format("2006-01-02")+"-"+b,
+		)
+		if err != nil {
+			return err
+		}
+	}
 
-// 	for _, file := range files {
-// 		fn := file.Name()
-// 		if strings.HasPrefix(fn, ".") ||
-// 			fn == basename ||
-// 			!strings.HasSuffix(fn, basename) {
-// 			continue
-// 		}
-// 		_, ok := kl[fn]
-// 		if ok {
-// 			continue
-// 		}
+	f, err := os.OpenFile(
+		rw.LogsFilePath,
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
+		0644,
+	)
+	if err != nil {
+		return err
+	}
+	rw.logsFile = f
 
-// 		err = os.Remove(dirname + "/" + fn)
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
+	if err = rw.cleanOldFiles(); err != nil {
+		return err
+	}
 
-// 	w.time = time.Now()
-// 	return
-// }
+	rw.time = time.Now()
+	return nil
+}
+
+func (rw *RotateWriter) cleanOldFiles() error {
+	dir := filepath.Dir(rw.LogsFilePath)
+	bname := filepath.Base(rw.LogsFilePath)
+	// aut is our list of authorized files that will not be removed
+	aut := make(map[string]struct{})
+
+	// Populate the list of authorized files based on file name and date
+	// of previous days up to MaxAge days
+	for i := 0; i < rw.MaxAge; i++ {
+		aut[time.Now().AddDate(0, 0, -i).Format("2006-01-02")+"-"+bname] = struct{}{}
+	}
+
+	files, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+
+	for _, f := range files {
+		fn := f.Name()
+		// Do not remove if file begin with ".",
+		// ends with basename or is basename (is current file)
+		if strings.HasPrefix(fn, ".") ||
+			fn == bname ||
+			!strings.HasSuffix(fn, bname) {
+			continue
+		}
+
+		// Do not remove if file is authorized
+		_, ok := aut[fn]
+		if ok {
+			continue
+		}
+
+		err = os.Remove(dir + "/" + fn)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
