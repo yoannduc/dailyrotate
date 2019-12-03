@@ -12,16 +12,16 @@ import (
 )
 
 const (
-	DefaultLogsFilePath = "/tmp/rotating.log"
-	DefaultMaxAge       = 7
+	DefaultFilePath = "/tmp/rotating.log"
+	DefaultMaxAge   = 7
 )
 
 type RotateWriter struct {
-	lock         sync.Mutex
-	logsFile     *os.File
-	time         time.Time
-	LogsFilePath string
-	MaxAge       int
+	lock     sync.Mutex
+	file     *os.File
+	time     time.Time
+	FilePath string
+	MaxAge   int
 }
 
 func New(p string, ma int) (*RotateWriter, error) {
@@ -45,16 +45,16 @@ func New(p string, ma int) (*RotateWriter, error) {
 	}
 
 	return &RotateWriter{
-		logsFile:     lf,
-		time:         time.Now(),
-		LogsFilePath: p,
-		MaxAge:       ma,
+		file:     lf,
+		time:     time.Now(),
+		FilePath: p,
+		MaxAge:   ma,
 	}, nil
 }
 
 func NewWithDefaults() (*RotateWriter, error) {
 	lf, err := os.OpenFile(
-		DefaultLogsFilePath,
+		DefaultFilePath,
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
 		0644,
 	)
@@ -63,10 +63,10 @@ func NewWithDefaults() (*RotateWriter, error) {
 	}
 
 	return &RotateWriter{
-		logsFile:     lf,
-		time:         time.Now(),
-		LogsFilePath: DefaultLogsFilePath,
-		MaxAge:       DefaultMaxAge,
+		file:     lf,
+		time:     time.Now(),
+		FilePath: DefaultFilePath,
+		MaxAge:   DefaultMaxAge,
 	}, nil
 }
 
@@ -74,7 +74,7 @@ func NewWithDefaults() (*RotateWriter, error) {
 func (rw *RotateWriter) Write(output []byte) (int, error) {
 	rw.lock.Lock()
 	defer rw.lock.Unlock()
-	return rw.logsFile.Write(output)
+	return rw.file.Write(output)
 }
 
 func (rw *RotateWriter) ShouldRotate() bool {
@@ -85,7 +85,7 @@ func (rw *RotateWriter) ShouldRotate() bool {
 		return true
 	}
 
-	if f, err := os.Stat(rw.LogsFilePath); err == nil {
+	if f, err := os.Stat(rw.FilePath); err == nil {
 		fy, fm, fd := f.ModTime().Date()
 
 		if fy != rwy || fm != rwm || fd != rwd {
@@ -101,19 +101,19 @@ func (rw *RotateWriter) Rotate() error {
 	defer rw.lock.Unlock()
 
 	// Close existing file if open
-	if rw.logsFile != nil {
-		err := rw.logsFile.Close()
+	if rw.file != nil {
+		err := rw.file.Close()
 		if err != nil {
 			return err
 		}
-		rw.logsFile = nil
+		rw.file = nil
 	}
 
-	d := filepath.Dir(rw.LogsFilePath)
-	b := filepath.Base(rw.LogsFilePath)
-	if lf, err := os.Stat(rw.LogsFilePath); err == nil {
+	d := filepath.Dir(rw.FilePath)
+	b := filepath.Base(rw.FilePath)
+	if lf, err := os.Stat(rw.FilePath); err == nil {
 		err = os.Rename(
-			rw.LogsFilePath,
+			rw.FilePath,
 			d+"/"+lf.ModTime().Format("2006-01-02")+"-"+b,
 		)
 		if err != nil {
@@ -122,14 +122,14 @@ func (rw *RotateWriter) Rotate() error {
 	}
 
 	f, err := os.OpenFile(
-		rw.LogsFilePath,
+		rw.FilePath,
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
 		0644,
 	)
 	if err != nil {
 		return err
 	}
-	rw.logsFile = f
+	rw.file = f
 
 	if err = rw.cleanOldFiles(); err != nil {
 		return err
@@ -140,8 +140,8 @@ func (rw *RotateWriter) Rotate() error {
 }
 
 func (rw *RotateWriter) cleanOldFiles() error {
-	dir := filepath.Dir(rw.LogsFilePath)
-	bname := filepath.Base(rw.LogsFilePath)
+	dir := filepath.Dir(rw.FilePath)
+	bname := filepath.Base(rw.FilePath)
 	// aut is our list of authorized files that will not be removed
 	aut := make(map[string]struct{})
 
