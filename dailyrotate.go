@@ -35,7 +35,7 @@ type RotateWriter struct {
 	// will be stored. Must be an absolute path
 	FilePath string
 	// MaxAge Represents the max number of file to keep before cleaning
-	// after rotation. 0 for no cleaning
+	// after rotation. -1 for no cleaning
 	MaxAge int
 }
 
@@ -48,8 +48,8 @@ func New(p string, ma int) (*RotateWriter, error) {
 		return nil, errors.New("Path should be absolute (\"" + p + "\" given)")
 	}
 
-	if ma < 0 {
-		return nil, errors.New("MaxAge should be 0 or more (" +
+	if ma < -1 {
+		return nil, errors.New("MaxAge should be -1 or more (" +
 			strconv.Itoa(ma) + " given)")
 	}
 
@@ -98,6 +98,7 @@ func (rw *RotateWriter) Write(o []byte) (int, error) {
 	return rw.file.Write(o)
 }
 
+// RotateWrite Performs a safe rotate and then write to file
 func (rw *RotateWriter) RotateWrite(o []byte) (int, error) {
 	err := rw.RotateSafe()
 	if err != nil {
@@ -131,7 +132,7 @@ func (rw *RotateWriter) ShouldRotate() bool {
 // Rotate Performs the rotation on the file. Verification on whether
 // the file should rotate or not should be performed before calling Rotate.
 // Rotate rename the current file in format YYYY-MM-DD_filename and then
-// open a new file and then clean old file up to max age if max age is not 0
+// open a new file and then clean old file up to max age if max age is not -1
 func (rw *RotateWriter) Rotate() error {
 	rw.lock.Lock()
 	defer rw.lock.Unlock()
@@ -167,8 +168,8 @@ func (rw *RotateWriter) Rotate() error {
 	}
 	rw.file = f
 
-	// Clean only if MaxAge != 0. 0 is keep forever
-	if rw.MaxAge > 0 {
+	// Clean only if MaxAge != -1. -1 is keep forever
+	if rw.MaxAge > -1 {
 		if err = rw.cleanOldFiles(); err != nil {
 			return err
 		}
@@ -178,6 +179,7 @@ func (rw *RotateWriter) Rotate() error {
 	return nil
 }
 
+// RotateSafe Internally uses ShouldRotate and then Rotate if needed
 func (rw *RotateWriter) RotateSafe() error {
 	if rw.ShouldRotate() {
 		return rw.Rotate()
@@ -186,6 +188,7 @@ func (rw *RotateWriter) RotateSafe() error {
 	return nil
 }
 
+// cleanOldFiles Cleans old files up to max age
 func (rw *RotateWriter) cleanOldFiles() error {
 	dir := filepath.Dir(rw.FilePath)
 	bname := filepath.Base(rw.FilePath)
