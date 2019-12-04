@@ -7,19 +7,18 @@
 // The rotated file will be of format YYYY-MM-DD-basename
 //
 // A trivial example is:
-//
+//g
 // package main
 //
 // import "github.com/yoannduc/dailyrotate"
 //
 // func main() {
-// 	f, err := dailyrotate.New("/tmp/testfile.log", 3)
+// 	rf, err := dailyrotate.New("/tmp/testfile.log", 3)
 // 	if err != nil {
 // 		// handle your error
-// 		return
 // 	}
 //
-// 	f.RotateWrite()
+// 	rf.RotateWrite()
 // }
 //
 package dailyrotate
