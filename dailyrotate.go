@@ -195,7 +195,7 @@ func (rw *RotateWriter) cleanOldFiles() error {
 
 	// Populate the list of authorized files based on file name and date
 	// of previous days up to MaxAge days
-	for i := 0; i < rw.MaxAge; i++ {
+	for i := 1; i <= rw.MaxAge; i++ {
 		aut[time.Now().AddDate(0, 0, -i).Format("2006-01-02")+"-"+bname] = struct{}{}
 	}
 
