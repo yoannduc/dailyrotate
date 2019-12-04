@@ -11,8 +11,6 @@ import (
 	"time"
 )
 
-// TODO COMMENT GODOC
-
 const (
 	// defaultFilePath Default file path to save file when using NewWithDefaults
 	defaultFilePath = "/tmp/rotating.log"
