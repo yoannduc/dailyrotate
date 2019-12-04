@@ -39,6 +39,9 @@ type RotateWriter struct {
 	MaxAge int
 }
 
+// New Instanciate a new *RotateWriter with given path and max age
+// Path must be an absolute path
+// Max age is the number of old file to keep after rotation
 func New(p string, ma int) (*RotateWriter, error) {
 	p = filepath.Clean(p)
 	if !filepath.IsAbs(p) {
@@ -67,6 +70,9 @@ func New(p string, ma int) (*RotateWriter, error) {
 	}, nil
 }
 
+// NewWithDefaults Instanciate an new *RotateWriter with default path & max age
+// Default path is "/tmp/rotating.log"
+// Default max age is 7 days
 func NewWithDefaults() (*RotateWriter, error) {
 	lf, err := os.OpenFile(
 		defaultFilePath,
