@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be found
 // in the LICENSE file.
 
-// Package dailyrotate is a daily rotating file connection
+// Package dailyrotate is a daily rotating file writer
 //
 // The rotated file will be of format YYYY-MM-DD-basename
 //

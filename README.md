@@ -1,6 +1,6 @@
 # Dailyrotate
 
-Dailyrotate is a daily rotating file connection for go (golang). It is based on top of [os.OpenFile](https://golang.org/pkg/os/#OpenFile) and implements [io.Writer](https://golang.org/pkg/io/#Writer) interface. Dailyrotate also cleans the directory to always match the number of rotated files you want.
+Dailyrotate is a daily rotating file writer for go (golang). It is based on top of [os.OpenFile](https://golang.org/pkg/os/#OpenFile) and implements [io.Writer](https://golang.org/pkg/io/#Writer) interface. Dailyrotate also cleans the directory to always match the number of rotated files you want.
 
 ## Why
 
