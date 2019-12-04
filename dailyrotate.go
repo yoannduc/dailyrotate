@@ -107,6 +107,8 @@ func (rw *RotateWriter) RotateWrite(o []byte) (int, error) {
 	return rw.Write(o)
 }
 
+// ShouldRotate Returns a boolean indicating if file should rotate
+// based on both today's date & file modified date compared to internal time
 func (rw *RotateWriter) ShouldRotate() bool {
 	ny, nm, nd := time.Now().Date()
 	rwy, rwm, rwd := rw.time.Date()
@@ -126,6 +128,10 @@ func (rw *RotateWriter) ShouldRotate() bool {
 	return false
 }
 
+// Rotate Performs the rotation on the file. Verification on whether
+// the file should rotate or not should be performed before calling Rotate.
+// Rotate rename the current file in format YYYY-MM-DD_filename and then
+// open a new file and then clean old file up to max age if max age is not 0
 func (rw *RotateWriter) Rotate() error {
 	rw.lock.Lock()
 	defer rw.lock.Unlock()
