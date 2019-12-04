@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+// TODO COMMENT GODOC
+
 const (
 	DefaultFilePath = "/tmp/rotating.log"
 	DefaultMaxAge   = 7
@@ -71,10 +73,19 @@ func NewWithDefaults() (*RotateWriter, error) {
 }
 
 // Write satisfies the io.Writer interface.
-func (rw *RotateWriter) Write(output []byte) (int, error) {
+func (rw *RotateWriter) Write(o []byte) (int, error) {
 	rw.lock.Lock()
 	defer rw.lock.Unlock()
-	return rw.file.Write(output)
+	return rw.file.Write(o)
+}
+
+func (rw *RotateWriter) RotateWrite(o []byte) (int, error) {
+	err := rw.RotateSafe()
+	if err != nil {
+		return 0, err
+	}
+
+	return rw.Write(o)
 }
 
 func (rw *RotateWriter) ShouldRotate() bool {
@@ -136,6 +147,14 @@ func (rw *RotateWriter) Rotate() error {
 	}
 
 	rw.time = time.Now()
+	return nil
+}
+
+func (rw *RotateWriter) RotateSafe() error {
+	if rw.ShouldRotate() {
+		return rw.Rotate()
+	}
+
 	return nil
 }
 
