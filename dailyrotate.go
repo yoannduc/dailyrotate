@@ -14,10 +14,14 @@ import (
 // TODO COMMENT GODOC
 
 const (
-	// DefaultFilePath Default file path to save file when using NewWithDefaults
-	DefaultFilePath = "/tmp/rotating.log"
-	// DefaultMaxAge Default max age to keep files when using NewWithDefaults
-	DefaultMaxAge = 7
+	// defaultFilePath Default file path to save file when using NewWithDefaults
+	defaultFilePath = "/tmp/rotating.log"
+	// defaultMaxAge Default max age to keep files when using NewWithDefaults
+	defaultMaxAge = 7
+	// fileFlag Flag to open the files with
+	fileFlag = os.O_APPEND | os.O_CREATE | os.O_WRONLY
+	// filePerm Permissions to open the files with
+	filePerm = 0644
 )
 
 // RotateWriter Rotating writer object
@@ -48,8 +52,8 @@ func New(p string, ma int) (*RotateWriter, error) {
 
 	lf, err := os.OpenFile(
 		p,
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
-		0644,
+		fileFlag,
+		filePerm,
 	)
 	if err != nil {
 		return nil, err
@@ -65,9 +69,9 @@ func New(p string, ma int) (*RotateWriter, error) {
 
 func NewWithDefaults() (*RotateWriter, error) {
 	lf, err := os.OpenFile(
-		DefaultFilePath,
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
-		0644,
+		defaultFilePath,
+		fileFlag,
+		filePerm,
 	)
 	if err != nil {
 		return nil, err
@@ -76,8 +80,8 @@ func NewWithDefaults() (*RotateWriter, error) {
 	return &RotateWriter{
 		file:     lf,
 		time:     time.Now(),
-		FilePath: DefaultFilePath,
-		MaxAge:   DefaultMaxAge,
+		FilePath: defaultFilePath,
+		MaxAge:   defaultMaxAge,
 	}, nil
 }
 
@@ -143,8 +147,8 @@ func (rw *RotateWriter) Rotate() error {
 
 	f, err := os.OpenFile(
 		rw.FilePath,
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
-		0644,
+		fileFlag,
+		filePerm,
 	)
 	if err != nil {
 		return err
