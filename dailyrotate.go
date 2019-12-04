@@ -1,3 +1,27 @@
+// Copyright 2019 Yoann Duc. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found
+// in the LICENSE file.
+
+// Package dailyrotate is a daily rotating file connection
+//
+// The rotated file will be of format YYYY-MM-DD-basename
+//
+// A trivial example is:
+//
+// package main
+//
+// import "github.com/yoannduc/dailyrotate"
+//
+// func main() {
+// 	f, err := dailyrotate.New("/tmp/testfile.log", 3)
+// 	if err != nil {
+// 		// handle your error
+// 		return
+// 	}
+//
+// 	f.RotateWrite()
+// }
+//
 package dailyrotate
 
 import (
