@@ -14,16 +14,25 @@ import (
 // TODO COMMENT GODOC
 
 const (
+	// DefaultFilePath Default file path to save file when using NewWithDefaults
 	DefaultFilePath = "/tmp/rotating.log"
-	DefaultMaxAge   = 7
+	// DefaultMaxAge Default max age to keep files when using NewWithDefaults
+	DefaultMaxAge = 7
 )
 
+// RotateWriter Rotating writer object
 type RotateWriter struct {
-	lock     sync.Mutex
-	file     *os.File
-	time     time.Time
+	lock sync.Mutex
+	// file Represents an open connection to the current day file
+	file *os.File
+	// time Represents the current time for writer to know if it should rotate
+	time time.Time
+	// FilePath Represents the filepath on which the rotating file
+	// will be stored. Must be an absolute path
 	FilePath string
-	MaxAge   int
+	// MaxAge Represents the max number of file to keep before cleaning
+	// after rotation. 0 for no cleaning
+	MaxAge int
 }
 
 func New(p string, ma int) (*RotateWriter, error) {
@@ -32,8 +41,8 @@ func New(p string, ma int) (*RotateWriter, error) {
 		return nil, errors.New("Path should be absolute (\"" + p + "\" given)")
 	}
 
-	if ma < 1 {
-		return nil, errors.New("MaxAge should be 1 or more (" +
+	if ma < 0 {
+		return nil, errors.New("MaxAge should be 0 or more (" +
 			strconv.Itoa(ma) + " given)")
 	}
 
@@ -142,8 +151,11 @@ func (rw *RotateWriter) Rotate() error {
 	}
 	rw.file = f
 
-	if err = rw.cleanOldFiles(); err != nil {
-		return err
+	// Clean only if MaxAge != 0. 0 is keep forever
+	if rw.MaxAge > 0 {
+		if err = rw.cleanOldFiles(); err != nil {
+			return err
+		}
 	}
 
 	rw.time = time.Now()
