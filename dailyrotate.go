@@ -35,10 +35,10 @@ import (
 )
 
 const (
-	// defaultFilePath Default file path to save file when using NewWithDefaults
-	defaultFilePath = "/tmp/rotating.log"
-	// defaultMaxAge Default max age to keep files when using NewWithDefaults
-	defaultMaxAge = 7
+	// DefaultFilePath Default file path to save file when using NewWithDefaults
+	DefaultFilePath = "/tmp/rotating.log"
+	// DefaultMaxAge Default max age to keep files when using NewWithDefaults
+	DefaultMaxAge = 7
 	// fileFlag Flag to open the files with
 	fileFlag = os.O_APPEND | os.O_CREATE | os.O_WRONLY
 	// filePerm Permissions to open the files with
@@ -95,7 +95,7 @@ func New(p string, ma int) (*RotateWriter, error) {
 // Default path is "/tmp/rotating.log"
 // Default max age is 7 days
 func NewWithDefaults() (*RotateWriter, error) {
-	return New(defaultFilePath, defaultMaxAge)
+	return New(DefaultFilePath, DefaultMaxAge)
 }
 
 // Write satisfies the io.Writer interface.
