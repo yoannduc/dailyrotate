@@ -17,22 +17,22 @@ import "github.com/yoannduc/dailyrotate"
 
 func main() {
     // Instanciate a new RotateWriter
-    rf, err := dailyrotate.New("/tmp/myfile", -1)
+    rw, err := dailyrotate.New("/tmp/myfile", -1)
     if err != nil {
         // Handle error your own way
     }
 
     // Check if RotateWriter should rotate
-    if rf.ShouldRotate() {
+    if rw.ShouldRotate() {
         // Perform the rotation
-        err = rf.Rotate()
+        err = rw.Rotate()
         if err != nil {
             // Handle error your own way
         }
     }
 
     // Write to the RotateWriter
-    rf.Write([]byte("Some data"))
+    rw.Write([]byte("Some data"))
 }
 ```
 
@@ -45,14 +45,14 @@ import "github.com/yoannduc/dailyrotate"
 
 func main() {
     // Instanciate a new RotateWriter with default params
-    rf, err := dailyrotate.NewWithDefaults()
+    rw, err := dailyrotate.NewWithDefaults()
     if err != nil {
         // Handle error your own way
     }
 
     // Write to the RotateWriter
     // Rotate if needed before writing to the file
-    err = rf.RotateWrite([]byte("Some data"))
+    err = rw.RotateWrite([]byte("Some data"))
     if err != nil {
         // Handle error your own way
     }

@@ -95,21 +95,7 @@ func New(p string, ma int) (*RotateWriter, error) {
 // Default path is "/tmp/rotating.log"
 // Default max age is 7 days
 func NewWithDefaults() (*RotateWriter, error) {
-	lf, err := os.OpenFile(
-		defaultFilePath,
-		fileFlag,
-		filePerm,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &RotateWriter{
-		file:     lf,
-		time:     time.Now(),
-		FilePath: defaultFilePath,
-		MaxAge:   defaultMaxAge,
-	}, nil
+	return New(defaultFilePath, defaultMaxAge)
 }
 
 // Write satisfies the io.Writer interface.
