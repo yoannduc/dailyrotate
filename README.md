@@ -36,7 +36,7 @@ func main() {
 }
 ```
 
-Or with short conveignance methods:
+Or with short convenience methods:
 
 ```go
 package main
