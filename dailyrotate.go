@@ -47,17 +47,18 @@ const (
 
 // RotateWriter Rotating writer object
 type RotateWriter struct {
-	lock sync.Mutex
-	// file Represents an open connection to the current day file
-	file *os.File
-	// time Represents the current time for writer to know if it should rotate
-	time time.Time
 	// FilePath Represents the filepath on which the rotating file
 	// will be stored. Must be an absolute path
 	FilePath string
 	// MaxAge Represents the max number of file to keep before cleaning
 	// after rotation. -1 for no cleaning
 	MaxAge int
+	// lock
+	lock sync.Mutex
+	// file Represents an open connection to the current day file
+	file *os.File
+	// time Represents the current time for writer to know if it should rotate
+	time time.Time
 }
 
 // New instanciate a new *RotateWriter with given path and max age
