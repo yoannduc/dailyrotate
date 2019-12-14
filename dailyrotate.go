@@ -7,7 +7,7 @@
 // The rotated file will be of format YYYY-MM-DD-basename
 //
 // A trivial example is:
-//g
+//
 // package main
 //
 // import "github.com/yoannduc/dailyrotate"
@@ -60,7 +60,7 @@ type RotateWriter struct {
 	MaxAge int
 }
 
-// New Instanciate a new *RotateWriter with given path and max age
+// New instanciate a new *RotateWriter with given path and max age
 // Path must be an absolute path
 // Max age is the number of old file to keep after rotation
 func New(p string, ma int) (*RotateWriter, error) {
@@ -91,7 +91,7 @@ func New(p string, ma int) (*RotateWriter, error) {
 	}, nil
 }
 
-// NewWithDefaults Instanciate an new *RotateWriter with default path & max age
+// NewWithDefaults instanciate an new *RotateWriter with default path & max age
 // Default path is "/tmp/rotating.log"
 // Default max age is 7 days
 func NewWithDefaults() (*RotateWriter, error) {
@@ -105,7 +105,7 @@ func (rw *RotateWriter) Write(o []byte) (int, error) {
 	return rw.file.Write(o)
 }
 
-// RotateWrite Performs a safe rotate and then write to file
+// RotateWrite performs a safe rotate and then write to file
 func (rw *RotateWriter) RotateWrite(o []byte) (int, error) {
 	err := rw.RotateSafe()
 	if err != nil {
@@ -115,7 +115,7 @@ func (rw *RotateWriter) RotateWrite(o []byte) (int, error) {
 	return rw.Write(o)
 }
 
-// ShouldRotate Returns a boolean indicating if file should rotate
+// ShouldRotate returns a boolean indicating if file should rotate
 // based on both today's date & file modified date compared to internal time
 func (rw *RotateWriter) ShouldRotate() bool {
 	ny, nm, nd := time.Now().Date()
@@ -136,7 +136,7 @@ func (rw *RotateWriter) ShouldRotate() bool {
 	return false
 }
 
-// Rotate Performs the rotation on the file. Verification on whether
+// Rotate performs the rotation on the file. Verification on whether
 // the file should rotate or not should be performed before calling Rotate.
 // Rotate rename the current file in format YYYY-MM-DD_filename and then
 // open a new file and then clean old file up to max age if max age is not -1
@@ -186,7 +186,7 @@ func (rw *RotateWriter) Rotate() error {
 	return nil
 }
 
-// RotateSafe Internally uses ShouldRotate and then Rotate if needed
+// RotateSafe internally uses ShouldRotate and then Rotate if needed
 func (rw *RotateWriter) RotateSafe() error {
 	if rw.ShouldRotate() {
 		return rw.Rotate()
@@ -195,7 +195,7 @@ func (rw *RotateWriter) RotateSafe() error {
 	return nil
 }
 
-// cleanOldFiles Cleans old files up to max age
+// cleanOldFiles cleans old files up to max age
 func (rw *RotateWriter) cleanOldFiles() error {
 	dir := filepath.Dir(rw.FilePath)
 	bname := filepath.Base(rw.FilePath)
