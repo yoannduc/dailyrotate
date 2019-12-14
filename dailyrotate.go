@@ -2,24 +2,24 @@
 // Use of this source code is governed by a BSD-style license that can be found
 // in the LICENSE file.
 
-// Package dailyrotate is a daily rotating file writer
+// Package dailyrotate is a daily rotating file writer.
 //
-// The rotated file will be of format YYYY-MM-DD-basename
+// The rotated file will be of format YYYY-MM-DD-basename.
 //
 // A trivial example is:
 //
-// package main
+//  package main
 //
-// import "github.com/yoannduc/dailyrotate"
+//  import "github.com/yoannduc/dailyrotate"
 //
-// func main() {
-// 	rf, err := dailyrotate.New("/tmp/testfile.log", 3)
-// 	if err != nil {
-// 		// handle your error
-// 	}
+//  func main() {
+// 	 rf, err := dailyrotate.New("/tmp/testfile.log", 3)
+// 	 if err != nil {
+// 		 // handle your error
+// 	 }
 //
-// 	rf.RotateWrite()
-// }
+// 	 rf.RotateWrite()
+//  }
 //
 package dailyrotate
 
