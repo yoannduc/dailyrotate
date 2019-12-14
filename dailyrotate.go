@@ -4,9 +4,11 @@
 
 // Package dailyrotate is a daily rotating file writer.
 //
-// Current (today's) file will have inputed filename (no change applied).
-// All rotated (not today's) file will have rotated day prefix and will be of format YYYY-MM-DD-filename.
-// You can also set a number of days of old files to keep before cleaning then (WARNING: the number represent a number of days, not a number of files).
+// Current (today's) file will have inputed filename (no change applied). All
+// rotated (not today's) file will have rotated day prefix and will be of
+// format YYYY-MM-DD-filename. You must also set a number of days of old files
+// to keep before cleaning then (WARNING: the number represent a number
+// of days, not a number of files).
 //
 //
 // A trivial example is:
@@ -127,9 +129,9 @@ func (rw *RotateWriter) RotateWrite(o []byte) (int, error) {
 // ShouldRotate returns a boolean indicating if file should be rotated
 // based on both today's date & file modified date compared to internal time.
 // Doing so, we still rotate files even if we use dailyrotate on an existing
-// file which should be rotated (like 2 days old), but by launching dailyrotate
-// internal date will be today, and no rotation should be performed with just
-// date check.
+// file which should be rotated (like 2 days old), but by launching a new
+// dailyrotate, internal date will be today, and no rotation should be
+// performed with just date check.
 func (rw *RotateWriter) ShouldRotate() bool {
 	ny, nm, nd := time.Now().Date()
 	rwy, rwm, rwd := rw.time.Date()
