@@ -113,20 +113,20 @@ func NewWithDefaults() (*RotateWriter, error) {
 }
 
 // Write satisfies the io.Writer interface.
-func (rw *RotateWriter) Write(output []byte) (int, error) {
-	rw.lock.Lock()
-	defer rw.lock.Unlock()
-	return rw.file.Write(output)
+func (rotateWriter *RotateWriter) Write(output []byte) (int, error) {
+	rotateWriter.lock.Lock()
+	defer rotateWriter.lock.Unlock()
+	return rotateWriter.file.Write(output)
 }
 
 // RotateWrite performs a safe rotate and then write to file
-func (rw *RotateWriter) RotateWrite(output []byte) (int, error) {
-	err := rw.RotateSafe()
+func (rotateWriter *RotateWriter) RotateWrite(output []byte) (int, error) {
+	err := rotateWriter.RotateSafe()
 	if err != nil {
 		return 0, err
 	}
 
-	return rw.Write(output)
+	return rotateWriter.Write(output)
 }
 
 // ShouldRotate returns a boolean indicating if file should be rotated
@@ -135,15 +135,15 @@ func (rw *RotateWriter) RotateWrite(output []byte) (int, error) {
 // file which should be rotated (like 2 days old), but by launching a new
 // dailyrotate, internal date will be today, and no rotation should be
 // performed with just date check.
-func (rw *RotateWriter) ShouldRotate() bool {
+func (rotateWriter *RotateWriter) ShouldRotate() bool {
 	ny, nm, nd := time.Now().Date()
-	rwy, rwm, rwd := rw.time.Date()
+	rwy, rwm, rwd := rotateWriter.time.Date()
 
 	if ny != rwy || nm != rwm || nd != rwd {
 		return true
 	}
 
-	if f, err := os.Stat(rw.FilePath); err == nil {
+	if f, err := os.Stat(rotateWriter.FilePath); err == nil {
 		fy, fm, fd := f.ModTime().Date()
 
 		if fy != rwy || fm != rwm || fd != rwd {
@@ -158,24 +158,24 @@ func (rw *RotateWriter) ShouldRotate() bool {
 // the file should rotate or not should be performed before calling Rotate.
 // Rotate rename the current file in format YYYY-MM-DD-filename and then
 // open a new file and then clean old file up to max age if max age is not -1.
-func (rw *RotateWriter) Rotate() error {
-	rw.lock.Lock()
-	defer rw.lock.Unlock()
+func (rotateWriter *RotateWriter) Rotate() error {
+	rotateWriter.lock.Lock()
+	defer rotateWriter.lock.Unlock()
 
 	// Close existing file if open
-	if rw.file != nil {
-		err := rw.file.Close()
+	if rotateWriter.file != nil {
+		err := rotateWriter.file.Close()
 		if err != nil {
 			return err
 		}
-		rw.file = nil
+		rotateWriter.file = nil
 	}
 
-	d := filepath.Dir(rw.FilePath)
-	b := filepath.Base(rw.FilePath)
-	if lf, err := os.Stat(rw.FilePath); err == nil {
+	d := filepath.Dir(rotateWriter.FilePath)
+	b := filepath.Base(rotateWriter.FilePath)
+	if lf, err := os.Stat(rotateWriter.FilePath); err == nil {
 		err = os.Rename(
-			rw.FilePath,
+			rotateWriter.FilePath,
 			d+"/"+lf.ModTime().Format("2006-01-02")+"-"+b,
 		)
 		if err != nil {
@@ -184,45 +184,45 @@ func (rw *RotateWriter) Rotate() error {
 	}
 
 	f, err := os.OpenFile(
-		rw.FilePath,
+		rotateWriter.FilePath,
 		fileFlag,
 		filePerm,
 	)
 	if err != nil {
 		return err
 	}
-	rw.file = f
+	rotateWriter.file = f
 
 	// Clean only if MaxAge != -1. -1 is keep forever
-	if rw.MaxAge > -1 {
-		if err = rw.cleanOldFiles(); err != nil {
+	if rotateWriter.MaxAge > -1 {
+		if err = rotateWriter.cleanOldFiles(); err != nil {
 			return err
 		}
 	}
 
-	rw.time = time.Now()
+	rotateWriter.time = time.Now()
 	return nil
 }
 
 // RotateSafe internally uses ShouldRotate and then Rotate if needed.
-func (rw *RotateWriter) RotateSafe() error {
-	if rw.ShouldRotate() {
-		return rw.Rotate()
+func (rotateWriter *RotateWriter) RotateSafe() error {
+	if rotateWriter.ShouldRotate() {
+		return rotateWriter.Rotate()
 	}
 
 	return nil
 }
 
 // cleanOldFiles cleans old files up to max age.
-func (rw *RotateWriter) cleanOldFiles() error {
-	dir := filepath.Dir(rw.FilePath)
-	bname := filepath.Base(rw.FilePath)
+func (rotateWriter *RotateWriter) cleanOldFiles() error {
+	dir := filepath.Dir(rotateWriter.FilePath)
+	bname := filepath.Base(rotateWriter.FilePath)
 	// aut is our list of authorized files that will not be removed
 	aut := make(map[string]struct{})
 
 	// Populate the list of authorized files based on file name and date
 	// of previous days up to MaxAge days
-	for i := 1; i <= rw.MaxAge; i++ {
+	for i := 1; i <= rotateWriter.MaxAge; i++ {
 		aut[time.Now().AddDate(0, 0, -i).Format("2006-01-02")+"-"+bname] = struct{}{}
 	}
 
