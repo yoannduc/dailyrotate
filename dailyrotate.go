@@ -53,7 +53,7 @@ type RotateWriter struct {
 	// MaxAge Represents the max number of file to keep before cleaning
 	// after rotation. -1 for no cleaning
 	MaxAge int
-	// lock
+
 	lock sync.Mutex
 	// file Represents an open connection to the current day file
 	file *os.File
