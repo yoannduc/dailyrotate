@@ -4,7 +4,10 @@
 
 // Package dailyrotate is a daily rotating file writer.
 //
-// The rotated file will be of format YYYY-MM-DD-basename.
+// Current (today's) file will have inputed filename (no change applied).
+// All rotated (not today's) file will have rotated day prefix and will be of format YYYY-MM-DD-filename.
+// You can also set a number of days of old files to keep before cleaning then (WARNING: the number represent a number of days, not a number of files).
+//
 //
 // A trivial example is:
 //
@@ -48,10 +51,10 @@ const (
 // RotateWriter Rotating writer object
 type RotateWriter struct {
 	// FilePath Represents the filepath on which the rotating file
-	// will be stored. Must be an absolute path
+	// will be stored. Must be an absolute path.
 	FilePath string
-	// MaxAge Represents the max number of file to keep before cleaning
-	// after rotation. -1 for no cleaning
+	// MaxAge Represents the max number of dayswe can keep the rotated files
+	// before cleaning them to keep before cleaning. -1 for no cleaning.
 	MaxAge int
 
 	lock sync.Mutex
@@ -61,9 +64,14 @@ type RotateWriter struct {
 	time time.Time
 }
 
-// New instanciate a new *RotateWriter with given path and max age
-// Path must be an absolute path
-// Max age is the number of old file to keep after rotation
+// New instanciate a new *RotateWriter with given path and max age.
+// Path must be an absolute path.
+// Max age is the number of days we can keep the rotated files
+// before cleaning them.
+//
+// Please note that max age represents an AGE (in days), and not a number
+// of files. For example, if you have 2 rotated files which are 10 and 3
+// days old and a max age 5, the first file WILL be deleted.
 func New(p string, ma int) (*RotateWriter, error) {
 	p = filepath.Clean(p)
 	if !filepath.IsAbs(p) {
@@ -92,9 +100,9 @@ func New(p string, ma int) (*RotateWriter, error) {
 	}, nil
 }
 
-// NewWithDefaults instanciate an new *RotateWriter with default path & max age
-// Default path is "/tmp/rotating.log"
-// Default max age is 7 days
+// NewWithDefaults instanciate an new *RotateWriter with default path & max age.
+// Default path is "/tmp/rotating.log".
+// Default max age is 7 days.
 func NewWithDefaults() (*RotateWriter, error) {
 	return New(DefaultFilePath, DefaultMaxAge)
 }
@@ -116,8 +124,12 @@ func (rw *RotateWriter) RotateWrite(o []byte) (int, error) {
 	return rw.Write(o)
 }
 
-// ShouldRotate returns a boolean indicating if file should rotate
-// based on both today's date & file modified date compared to internal time
+// ShouldRotate returns a boolean indicating if file should be rotated
+// based on both today's date & file modified date compared to internal time.
+// Doing so, we still rotate files even if we use dailyrotate on an existing
+// file which should be rotated (like 2 days old), but by launching dailyrotate
+// internal date will be today, and no rotation should be performed with just
+// date check.
 func (rw *RotateWriter) ShouldRotate() bool {
 	ny, nm, nd := time.Now().Date()
 	rwy, rwm, rwd := rw.time.Date()
@@ -139,8 +151,8 @@ func (rw *RotateWriter) ShouldRotate() bool {
 
 // Rotate performs the rotation on the file. Verification on whether
 // the file should rotate or not should be performed before calling Rotate.
-// Rotate rename the current file in format YYYY-MM-DD_filename and then
-// open a new file and then clean old file up to max age if max age is not -1
+// Rotate rename the current file in format YYYY-MM-DD-filename and then
+// open a new file and then clean old file up to max age if max age is not -1.
 func (rw *RotateWriter) Rotate() error {
 	rw.lock.Lock()
 	defer rw.lock.Unlock()
@@ -187,7 +199,7 @@ func (rw *RotateWriter) Rotate() error {
 	return nil
 }
 
-// RotateSafe internally uses ShouldRotate and then Rotate if needed
+// RotateSafe internally uses ShouldRotate and then Rotate if needed.
 func (rw *RotateWriter) RotateSafe() error {
 	if rw.ShouldRotate() {
 		return rw.Rotate()
@@ -196,7 +208,7 @@ func (rw *RotateWriter) RotateSafe() error {
 	return nil
 }
 
-// cleanOldFiles cleans old files up to max age
+// cleanOldFiles cleans old files up to max age.
 func (rw *RotateWriter) cleanOldFiles() error {
 	dir := filepath.Dir(rw.FilePath)
 	bname := filepath.Base(rw.FilePath)
