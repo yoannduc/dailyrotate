@@ -40,9 +40,11 @@ import (
 )
 
 const (
-	// DefaultFilePath Default file path to save file when using NewWithDefaults
+	// DefaultFilePath is the default file path to save file when
+	// using NewWithDefaults
 	DefaultFilePath = "/tmp/rotating.log"
-	// DefaultMaxAge Default max age to keep files when using NewWithDefaults
+	// DefaultMaxAge is the default max age to keep files when
+	// using NewWithDefaults
 	DefaultMaxAge = 7
 	// fileFlag Flag to open the files with
 	fileFlag = os.O_APPEND | os.O_CREATE | os.O_WRONLY
@@ -52,10 +54,10 @@ const (
 
 // RotateWriter Rotating writer object
 type RotateWriter struct {
-	// FilePath Represents the filepath on which the rotating file
+	// FilePath represents the filepath on which the rotating file
 	// will be stored. Must be an absolute path.
 	FilePath string
-	// MaxAge Represents the max number of dayswe can keep the rotated files
+	// MaxAge represents the max number of dayswe can keep the rotated files
 	// before cleaning them to keep before cleaning. -1 for no cleaning.
 	MaxAge int
 
@@ -74,19 +76,20 @@ type RotateWriter struct {
 // Please note that max age represents an AGE (in days), and not a number
 // of files. For example, if you have 2 rotated files which are 10 and 3
 // days old and a max age 5, the first file WILL be deleted.
-func New(p string, ma int) (*RotateWriter, error) {
-	p = filepath.Clean(p)
-	if !filepath.IsAbs(p) {
-		return nil, errors.New("Path should be absolute (\"" + p + "\" given)")
+func New(path string, maxAge int) (*RotateWriter, error) {
+	path = filepath.Clean(path)
+	if !filepath.IsAbs(path) {
+		return nil, errors.New("Path must be absolute. (\"" +
+			path + "\" given)")
 	}
 
-	if ma < -1 {
+	if maxAge < -1 {
 		return nil, errors.New("MaxAge should be -1 or more (" +
-			strconv.Itoa(ma) + " given)")
+			strconv.Itoa(maxAge) + " given)")
 	}
 
 	lf, err := os.OpenFile(
-		p,
+		path,
 		fileFlag,
 		filePerm,
 	)
@@ -97,8 +100,8 @@ func New(p string, ma int) (*RotateWriter, error) {
 	return &RotateWriter{
 		file:     lf,
 		time:     time.Now(),
-		FilePath: p,
-		MaxAge:   ma,
+		FilePath: path,
+		MaxAge:   maxAge,
 	}, nil
 }
 
@@ -110,20 +113,20 @@ func NewWithDefaults() (*RotateWriter, error) {
 }
 
 // Write satisfies the io.Writer interface.
-func (rw *RotateWriter) Write(o []byte) (int, error) {
+func (rw *RotateWriter) Write(output []byte) (int, error) {
 	rw.lock.Lock()
 	defer rw.lock.Unlock()
-	return rw.file.Write(o)
+	return rw.file.Write(output)
 }
 
 // RotateWrite performs a safe rotate and then write to file
-func (rw *RotateWriter) RotateWrite(o []byte) (int, error) {
+func (rw *RotateWriter) RotateWrite(output []byte) (int, error) {
 	err := rw.RotateSafe()
 	if err != nil {
 		return 0, err
 	}
 
-	return rw.Write(o)
+	return rw.Write(output)
 }
 
 // ShouldRotate returns a boolean indicating if file should be rotated
